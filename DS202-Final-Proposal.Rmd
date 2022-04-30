@@ -1,0 +1,22 @@
+---
+title: "DS202-Final-Proposal"
+author: "Joseph Trembley"
+date: "4/30/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Project Proposal
+
+Members: Joseph Trembley
+
+Github Repository: https://github.com/trembleyjr/DS202-Final
+
+Dataset Link: https://www.kaggle.com/datasets/psycon/ethusdt-2017-to-2022
+
+About the data: This data set explores the trading history of Ethereum. It shows variables such as how much Ethereum is traded at a time, the price, when the market opened and closed, and the number of trades. The goal is to explore how people trade Ethereum in order to get an insight into the way people view cryptocurrency.
+
+Cleaning this data: To clean the dataset, I will first check to find the NA values.  If any columns happen to have a large number of NA values, then I will drop the column.  Otherwise, I will remove the rows with the NA values.  After I finish removing these NA values, I will compare with them through various visualizaiton methods and explain how they all connect together.
