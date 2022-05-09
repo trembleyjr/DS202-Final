@@ -1,0 +1,158 @@
+---
+title: "DS202-Final_Project"
+author: "Joseph Trembley"
+date: "5/7/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## DS 202 Final Project
+
+Members: Joseph Trembley
+
+Github Repository: https://github.com/trembleyjr/DS202-Final
+
+Dataset Link: https://www.kaggle.com/datasets/psycon/ethusdt-2017-to-2022
+
+Import dataset and view what is there
+
+```{r}
+library(tidyverse)
+eth = read_csv('eth-usdt.csv')
+```
+
+Look for NA values to remove
+
+```{r}
+colSums(is.na(eth))
+```
+
+Remove ignore column from dataframe, not needed for analysis
+
+```{r}
+eth1 = eth %>% select(-Ignore)
+```
+
+Deal with spaces in variable names
+
+```{r}
+names(eth1) = make.names(names(eth1))
+```
+
+In order to get an approximate visual for the change in the value of Ethereum overtime, I will compare each time the market opens to the price at the open, and do the same for close, to ensure that the trends are visualizing correctly on both.
+
+Compare Open Time and Open to see if Open has significant change over time
+
+```{r}
+eth1 %>% ggplot(aes(x = Open.Time, y = Open)) + geom_line()
+```
+
+Compare Close Time and Close to see if Close has significant change over time
+
+```{r}
+eth1 %>% ggplot(aes(x = Close.Time, y = Close)) + geom_line()
+```
+
+Since the change is nearly identical between the two, the Open.Time/Open relationship will be used as the baseline for the rest of this project. The next step is to see the variation in the market by showing the high and low values alongside the original graph.
+
+```{r}
+eth1 %>% ggplot(aes(x = Open.Time)) + geom_line(aes(y = Open), color = 'black') + geom_line(aes(y = High), color  ='green') + geom_line(aes(y = Low), color = 'red')
+```
+
+There appears to be very little variation in the market between the high and low values from open to close. Combining this with the graphs above, and it becomes clear that there is very little that changes in the day to day prices, most of the changes happen over the course of a few days at least.
+
+The next stage of the comparisons is to see the trading patterns and show how they relate to the price of the crypto-currency at a given time.
+
+```{r}
+eth1 %>% ggplot(aes(x = Open, y = Number.of.Trades)) + geom_point()
+```
+
+The above plot implies that there is no strong correlation between the number of trades and the opening price on the market.
+
+```{r}
+eth1 %>% ggplot(aes(x = Open, y = Volume)) + geom_point()
+```
+
+In this graph, there appears to be a slight decreasing trend in the volume traded when the price is increasing.
+
+Since the opening price of the market does not appear to influence the market too much, we will look at the trend of the volume traded and the number of trades over time, and see if there is any correlation there
+
+```{r}
+eth1 %>% ggplot(aes(x = Open.Time, y = Volume)) + geom_point()
+```
+
+```{r}
+eth1 %>% ggplot(aes(x = Open.Time, y = Number.of.Trades)) + geom_point()
+```
+
+In these two graphs, we can see that the spikes of the number of trades and the volume traded happen at different times. For the number of trades, it happens early 2021, and falls in late 2021. For the volume, it is much more gradual, but it spikes up in early 2020 while it drops mid 2021. With this in mind, it is necessary to see what else could be affecting the two variables.
+
+First, I will be looking at the volume, and look at the relationship of the prices and volume, but grouping by the year to get a sense of the relationship over time. To make this simpler, I will create a new column for the open and close times, which will be just the year of those variables
+
+```{r}
+eth1$Open.Time.Year = strftime(eth1$Open.Time, format = "%Y")
+eth1$Close.Time.Year = strftime(eth1$Close.Time, format = "%Y")
+```
+
+With the necessary facet variables created, I will check the relationships.
+
+```{r}
+eth1 %>% ggplot(aes(x = Volume)) + geom_histogram()
+```
+
+Having this at the beginning gives us an initial view of the data, meaning that there are a very small number of outliers in the data causing a skew right histogram.
+
+```{r}
+eth1 %>% ggplot(aes(x = Open, y = Volume)) + geom_point() + facet_wrap(~Open.Time.Year, scales = "free")
+```
+
+```{r}
+eth1 %>% ggplot(aes(x = Close, y = Volume)) + geom_point() + facet_wrap(~Close.Time.Year, scales = "free")
+```
+
+In these graphs, the trend appears to continue on their individual years, however, it appears that the rapid inflation of the cryptocurrency's value means that these years together it is difficult to determine the trend. Now, I will use another type of graph before moving onto the number of trades.
+
+```{r}
+eth1 %>% ggplot(aes(x = Volume)) + geom_boxplot() + facet_wrap(~Open.Time.Year, scales = "free")
+```
+
+Most of the volumes by year are small in comparison to the rest by each year, but there are plenty of outliers. This graph demonstrates that there could be many values which are not following along with the trends due to large orders.
+
+```{r}
+eth1 %>% ggplot(aes(x = Number.of.Trades)) + geom_histogram()
+```
+
+This gives us an initial look at the data set. Much like the volume, this one appears to have some outliers causing a skew right distribution in the data.
+
+```{r}
+eth1 %>% ggplot(aes(x = Open, y = Number.of.Trades)) + geom_point() + facet_wrap(~Open.Time.Year, scales = "free")
+```
+
+```{r}
+eth1 %>% ggplot(aes(x = Close, y = Number.of.Trades)) + geom_point() + facet_wrap(~Close.Time.Year, scales = "free")
+```
+
+In these graphs, there does not appear to be any sort of trend between the years. First, it drops off, then it appears to rise between 2021 and 2022.
+
+```{r}
+eth1 %>% ggplot(aes(x = Number.of.Trades)) + geom_boxplot() + facet_wrap(~Open.Time.Year, scales = "free")
+```
+
+Like the volume, there are a lot of values which are outliers, representing days where a lot of people were trading.
+
+Next, I will create a new variable called Net.Change, representing the differences between Open to Close. I will use this to see if the change in the market had an effect on the volume sold or number of trades.
+
+```{r}
+eth1$Net.Change = eth1$Close - eth1$Open
+```
+
+Here, a negative number means that the market from open to close has lost value and a positive number means that there was gain.
+
+```{r}
+eth1 %>% ggplot(aes(x = Close.Time, y = Net.Change)) + geom_point() 
+```
+
+This graph reveals that there is much more variation in the difference as time goes on. This implies that at the beginning of 2021, something changed in the market that caused much more activity, which is further evidenced by the plots describing the Number.of.Trades and Volume graphs. In conclusion, the data appears to not follow a trend at any specific point. However, there was a spike in the trade of cryptocurrency in mid 2020 - early 2021 that affected the trade and the volume traded in the market. There does not appear to be any specific cause that can be found within the dataset, so since there do not appear to be any other variables that we can use, the results for why this spike occurred are inconclusive and not found within this file. However, based on the trends, I do not believe that the values will return to original trade and volume in the next few years.
